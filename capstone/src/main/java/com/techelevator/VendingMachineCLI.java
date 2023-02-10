@@ -12,7 +12,6 @@ public class VendingMachineCLI {
     final Scanner userInput = new Scanner(System.in);
     Map<String, Items> inventory = new HashMap<>();
 
-
     public VendingMachineCLI() {
     }
 
@@ -23,57 +22,104 @@ public class VendingMachineCLI {
 
     public void run() {
         readFromFile("C:vendingmachine.csv");
-
         printMainMenu();
-
+        purchaseWorkflow();
         // entry point for the vending machine
     }
 
-
     public void printMainMenu() {
-        System.out.println("(1) Display Vending Machine Items");
-        System.out.println("(2) Purchase");
-        System.out.println("(3) Exit");
-        System.out.println("Please select your option");
+        boolean mainMenuSelection = true;
+        while (mainMenuSelection) {
+            System.out.println("Please select your option");
+            System.out.println("(1) Display Vending Machine Items");
+            System.out.println("(2) Purchase");
+            System.out.println("(3) Exit");
 
+            String menuInput = userInput.nextLine();
+            if (menuInput.equals("1")) {
+                printDisplayItems();
 
-        String menuInput = userInput.nextLine();
-
-        if (menuInput.equals("1")) {
-            printDisplayItems();
-
-        } else if (menuInput.equals("2")) {
-            printPurchaseMenu();
-        } else {
-            if (menuInput.equals("3")) {
-                System.out.println("Thank you. Have a nice day.");
+            } else if (menuInput.equals("2")) {
+                purchaseWorkflow();
+            } else {
+                if (menuInput.equals("3")) {
+                    System.out.println("Thank you. Have a nice day.");
+                }
             }
-
+            mainMenuSelection = false;
         }
     }
 
-    public void printPurchaseMenu() {
-        System.out.println("(1) Feed Money");
-        System.out.println("(2) Select Product");
-        System.out.println("(3) Finish Transaction");
-        String purchaseInput = userInput.nextLine();
+    public void purchaseWorkflow() {
+        MoneyManagement moneyHandle = new MoneyManagement();
+        boolean purchasing = true;
+        while (purchasing) {
+            System.out.println("Current Money Provided: "  + "$"+ moneyHandle.getBalance());
+            System.out.println("(1) Feed Money");
+            System.out.println("(2) Select Product");
+            System.out.println("(3) Finish Transaction");
+            String purchaseInput = userInput.nextLine();
 
-        if (purchaseInput.equals("1")) {
-            //need to do this section
+            if (purchaseInput.equals("1")) {
+                addfunds(moneyHandle);
+            } else if (purchaseInput.equals("2")) {
+                sellItems(moneyHandle);
+            } else if (purchaseInput.equals("3")) {
+                moneyHandle.EndTransaction();
 
+                purchasing = false;
+            }
         }
-        if (purchaseInput.equals("2")) {
-            printDisplayItems();
+        printMainMenu();
 
-            System.out.println("Enter code Ex.(A1)");
-            String itemCodeToPurchase = userInput.nextLine();
-            if (inventory.containsKey(itemCodeToPurchase)) {
-                inventory.get(itemCodeToPurchase);
+    }
+
+
+
+    private void sellItems(MoneyManagement moneyHandle) {
+        printDisplayItems();
+        System.out.println("PLease enter the slot code!)");
+        String itemCodeToPurchase = userInput.nextLine();
+        Items itemBeingPurchased = getItemsFromSlotCode(itemCodeToPurchase.toUpperCase());
+            if (itemBeingPurchased.getQuantityOnHand()==Items.getSoldOut()) {
+                System.out.println("Sorry,that item is out of stock!");
+            }
+        if (itemBeingPurchased.getQuantityOnHand() != Items.getSoldOut()) {
+            if (moneyHandle.getBalance().compareTo(itemBeingPurchased.getPrice()) >= 0) {
+                itemBeingPurchased.itemSold();
+                moneyHandle.debit(itemBeingPurchased.getPrice());
+                makeSound(itemBeingPurchased);
+            } else if ((moneyHandle.getBalance().compareTo(itemBeingPurchased.getPrice()) <= 0)) {
+                System.out.println("Sorry, insufficient funds!");
+
             }
 
-
         }
 
+
+    }
+
+    private void makeSound(Items itemBeingPurchased) {
+        if (itemBeingPurchased.getType().equals("Chip")) {
+            System.out.println("Crunch, Crunch, Yum!");
+        }
+        else if (itemBeingPurchased.getType().equals("Candy")) {
+            System.out.println("Munch Munch, Yum!");
+        }
+        else if (itemBeingPurchased.getType().equals("Drink")) {
+            System.out.println("Glug Glug, Yum!");
+        }
+        else if (itemBeingPurchased.getType().equals("Gum")) {
+            System.out.println("Chew Chew, Yum!");
+        }
+    }
+
+    private void addfunds(MoneyManagement moneyHandle) {
+        System.out.println("Please enter cash in $1 bills only");
+        String input = userInput.nextLine();
+        BigDecimal amountGiven = new BigDecimal(input);
+        //TODO-validate the amount given
+        moneyHandle.credit(amountGiven);
     }
 
 
@@ -81,7 +127,7 @@ public class VendingMachineCLI {
     private void printDisplayItems() {
         for (Map.Entry<String, Items> item : inventory.entrySet()) {
             Items anItem = item.getValue();
-            System.out.println(anItem.getSlot() + " " + anItem.getName() + " " + anItem.getPrice() + " " + anItem.getType());
+            System.out.println(anItem.getSlot() + " " + anItem.getName() + " " + anItem.getPrice() + " " + anItem.getType() + " " + anItem.getQuantityOnHand());
         }
     }
 
@@ -103,7 +149,18 @@ public class VendingMachineCLI {
 
         }
     }
-//For referencing desired product purchase:
+
+    //For referencing desired product purchase:
 //    String itemCode = userInput.nextLine();
 //    Items selected = inventory.get(itemCode);
+
+
+    public Items getItemsFromSlotCode(String slotCode) {
+        Items itemToPurchase;
+        if (inventory.containsKey(slotCode)) {
+            itemToPurchase = inventory.get(slotCode);
+            return itemToPurchase;
+        }
+        return null;
+    }
 }

@@ -10,6 +10,15 @@ public class Items {
     private String type;
     private static Integer soldOut = 0;
     private static Integer maxStock = 5;
+    private Integer quantityOnHand=5;
+
+
+    public Integer getQuantityOnHand() {
+        return quantityOnHand;
+    }
+    public void itemSold () {
+        quantityOnHand--;
+    }
 
 
     public Items(String slot, String name, BigDecimal price, String type) {
