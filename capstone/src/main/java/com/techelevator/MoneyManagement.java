@@ -10,12 +10,14 @@ public class MoneyManagement {  //cash box in the machine
         return balance;
     }
 
-    public void credit(BigDecimal amount) {
+    public BigDecimal credit(BigDecimal amount) {
         this.balance = this.balance.add(amount);
+        return amount;
     }
 
     public void debit(BigDecimal amount) {
         this.balance = this.balance.subtract(amount);
+
     }
 
     public void EndTransaction() {

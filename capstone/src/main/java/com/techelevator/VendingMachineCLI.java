@@ -2,10 +2,14 @@ package com.techelevator;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import  java.time.LocalDateTime;
 
 public class VendingMachineCLI {
 
@@ -38,12 +42,14 @@ public class VendingMachineCLI {
             String menuInput = userInput.nextLine();
             if (menuInput.equals("1")) {
                 printDisplayItems();
+                printMainMenu();
 
             } else if (menuInput.equals("2")) {
                 purchaseWorkflow();
             } else {
                 if (menuInput.equals("3")) {
                     System.out.println("Thank you. Have a nice day.");
+                    printMainMenu();
                 }
             }
             mainMenuSelection = false;
@@ -52,6 +58,7 @@ public class VendingMachineCLI {
 
     public void purchaseWorkflow() {
         MoneyManagement moneyHandle = new MoneyManagement();
+        String giveChange= "Give Change: ";
         boolean purchasing = true;
         while (purchasing) {
             System.out.println("Current Money Provided: "  + "$"+ moneyHandle.getBalance());
@@ -65,7 +72,18 @@ public class VendingMachineCLI {
             } else if (purchaseInput.equals("2")) {
                 sellItems(moneyHandle);
             } else if (purchaseInput.equals("3")) {
-                moneyHandle.EndTransaction();
+                //GIVE CHANGE////////////
+                LocalDateTime currentDateAndTime = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+                String formatDateTime = currentDateAndTime.format(formatter);
+                try(PrintWriter toLogFile = new PrintWriter(new FileOutputStream("C:\\Users\\Student\\workspace\\capstone-1-team-3\\capstone\\target\\log.txt", true))) {
+                    toLogFile.println(formatDateTime +" "+ giveChange + "$" + moneyHandle.getBalance() + " " + " $0.00");
+                    moneyHandle.EndTransaction();
+
+                } catch(FileNotFoundException e) {
+                    System.err.println("Can't open file");
+                }
+
 
                 purchasing = false;
             }
@@ -74,28 +92,73 @@ public class VendingMachineCLI {
 
     }
 
+    private void addfunds(MoneyManagement moneyHandle) {
+        Log transactionLog = new Log();
+        String feedMoney=" Feed Money: ";
+        System.out.println("Please enter cash in $1 bills only");
+        String input = userInput.nextLine();
+        BigDecimal amountGiven = new BigDecimal(input);
+        //TODO-validate the amount given
+
+
+                          LocalDateTime currentDateAndTime = LocalDateTime.now();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+                    String formatDateTime = currentDateAndTime.format(formatter);
+                    try(PrintWriter toLogFile = new PrintWriter(new FileOutputStream("C:\\Users\\Student\\workspace\\capstone-1-team-3\\capstone\\target\\log.txt", true))) {
+                        toLogFile.println(formatDateTime + feedMoney + "$" + moneyHandle.credit(amountGiven) + "," + "$" +moneyHandle.getBalance());
+                    } catch(FileNotFoundException e) {
+                        System.err.println("Can't open file");
+                    }
+
+    }
+
+
+
+
 
 
     private void sellItems(MoneyManagement moneyHandle) {
+
+
         printDisplayItems();
-        System.out.println("PLease enter the slot code!)");
+        System.out.println("PLease enter the slot code!");
+
+        try {
         String itemCodeToPurchase = userInput.nextLine();
         Items itemBeingPurchased = getItemsFromSlotCode(itemCodeToPurchase.toUpperCase());
-            if (itemBeingPurchased.getQuantityOnHand()==Items.getSoldOut()) {
+
+            itemBeingPurchased.getSlot();
+
+
+            if (itemBeingPurchased.getQuantityOnHand() == Items.getSoldOut()) {
                 System.out.println("Sorry,that item is out of stock!");
             }
-        if (itemBeingPurchased.getQuantityOnHand() != Items.getSoldOut()) {
-            if (moneyHandle.getBalance().compareTo(itemBeingPurchased.getPrice()) >= 0) {
-                itemBeingPurchased.itemSold();
-                moneyHandle.debit(itemBeingPurchased.getPrice());
-                makeSound(itemBeingPurchased);
-            } else if ((moneyHandle.getBalance().compareTo(itemBeingPurchased.getPrice()) <= 0)) {
-                System.out.println("Sorry, insufficient funds!");
+
+            if (itemBeingPurchased.getQuantityOnHand() != Items.getSoldOut()) {
+                if (moneyHandle.getBalance().compareTo(itemBeingPurchased.getPrice()) >= 0) {
+                    itemBeingPurchased.itemSold();
+                    moneyHandle.debit(itemBeingPurchased.getPrice());
+                    makeSound(itemBeingPurchased);
+
+                    LocalDateTime currentDateAndTime = LocalDateTime.now();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+                    String formatDateTime = currentDateAndTime.format(formatter);
+                    try (PrintWriter toLogFile = new PrintWriter(new FileOutputStream("C:\\Users\\Student\\workspace\\capstone-1-team-3\\capstone\\target\\log.txt", true))) {
+                        toLogFile.println(formatDateTime + " " + itemBeingPurchased.getName() + " " + itemBeingPurchased.getSlot() + "" + " $" + itemBeingPurchased.getPrice() + "," + "$" + moneyHandle.getBalance());
+                    } catch (FileNotFoundException e) {
+                        System.err.println("Can't open file");
+                    }
+
+                } else if ((moneyHandle.getBalance().compareTo(itemBeingPurchased.getPrice()) <= 0)) {
+                    System.out.println("Sorry, insufficient funds!");
+
+                }
 
             }
 
+        } catch (Exception e) {
+            System.out.println("Please enter a valid item code.");
         }
-
 
     }
 
@@ -112,14 +175,6 @@ public class VendingMachineCLI {
         else if (itemBeingPurchased.getType().equals("Gum")) {
             System.out.println("Chew Chew, Yum!");
         }
-    }
-
-    private void addfunds(MoneyManagement moneyHandle) {
-        System.out.println("Please enter cash in $1 bills only");
-        String input = userInput.nextLine();
-        BigDecimal amountGiven = new BigDecimal(input);
-        //TODO-validate the amount given
-        moneyHandle.credit(amountGiven);
     }
 
 
@@ -164,3 +219,5 @@ public class VendingMachineCLI {
         return null;
     }
 }
+
+
