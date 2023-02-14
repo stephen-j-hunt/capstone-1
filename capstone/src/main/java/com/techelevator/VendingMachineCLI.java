@@ -53,6 +53,7 @@ public class VendingMachineCLI {
                 }
             }
             mainMenuSelection = false;
+            printMainMenu();
         }
     }
 
@@ -77,7 +78,8 @@ public class VendingMachineCLI {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
                 String formatDateTime = currentDateAndTime.format(formatter);
                 try(PrintWriter toLogFile = new PrintWriter(new FileOutputStream("C:\\Users\\Student\\workspace\\capstone-1-team-3\\capstone\\target\\log.txt", true))) {
-                    toLogFile.println(formatDateTime +" "+ giveChange + "$" + moneyHandle.getBalance() + " " + " $0.00");
+                    toLogFile.println(formatDateTime +" "+ giveChange + "$" + moneyHandle.getBalance() + " " + "$0.00");
+                    System.out.println("Here's your change, have a nice day!");
                     moneyHandle.EndTransaction();
 
                 } catch(FileNotFoundException e) {
@@ -105,7 +107,7 @@ public class VendingMachineCLI {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
                     String formatDateTime = currentDateAndTime.format(formatter);
                     try(PrintWriter toLogFile = new PrintWriter(new FileOutputStream("C:\\Users\\Student\\workspace\\capstone-1-team-3\\capstone\\target\\log.txt", true))) {
-                        toLogFile.println(formatDateTime + feedMoney + "$" + moneyHandle.credit(amountGiven) + "," + "$" +moneyHandle.getBalance());
+                        toLogFile.println(formatDateTime + feedMoney + "$" + moneyHandle.credit(amountGiven) + " " + "$" +moneyHandle.getBalance());
                     } catch(FileNotFoundException e) {
                         System.err.println("Can't open file");
                     }
